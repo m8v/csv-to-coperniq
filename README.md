@@ -2,18 +2,16 @@
 
 Batch import projects from CSV into Coperniq.
 
-## Flow Diagram
+## Flow 
+
+One tick = one row = one project (unless deduped).
 
 ```
 CSV Row
-├─> Standard Fields ──> Parse & Transform ──┐
-│   title, address, etc.                   │
-│                                         ├─> API Payload ──> POST /projects
-│                                         │
-└─> Custom Fields ───> Auto-type values ───┘
-    mount_type: string
-    panel_count: number
-    etc.
+->
+Parse (standard: types/arrays, custom: auto-type)
+->
+POST /projects
 ```
 
 ## Setup

@@ -2,7 +2,7 @@ import { config } from 'dotenv';
 import { parse } from 'papaparse';
 import { readFileSync } from 'fs';
 import ora from 'ora';
-import type { PromptModule } from 'inquirer';
+import inquirer from 'inquirer';
 import { CsvRow, mapCsvToCoperniq } from './types';
 
 // Load environment variables
@@ -24,17 +24,17 @@ if (!COPERNIQ_BASE_URL || !COPERNIQ_API_KEY) {
   process.exit(1);
 }
 
-async function ingestToCoperniq(data: CsvRow, dryRun: boolean) {
+async function ingestToCoperniq(data: CsvRow, dryRun: boolean): Promise<boolean> {
   if (dryRun) {
-    console.log('Dry run - would send:', JSON.stringify(mapCsvToCoperniq(data), null, 2));
+    console.info('Dry run - would send:', JSON.stringify(mapCsvToCoperniq(data), null, 2));
     return true;
   }
 
   try {
     // We know COPERNIQ_API_KEY is defined from validation above
-    const headers: HeadersInit = {
+    const headers = {
       'Content-Type': 'application/json',
-      'x-api-key': COPERNIQ_API_KEY
+      'x-api-key': COPERNIQ_API_KEY as string // Type assertion since we validated it above
     };
 
     const queryParams = new URLSearchParams({
@@ -69,6 +69,7 @@ async function processBatch(rows: CsvRow[], dryRun: boolean, spinner: ora.Ora): 
     const success = await ingestToCoperniq(row, dryRun);
     if (success) {
       successful++;
+      spinner.text = `Processed ${successful + failed} rows...`;
     } else {
       failed++;
     }
@@ -77,12 +78,11 @@ async function processBatch(rows: CsvRow[], dryRun: boolean, spinner: ora.Ora): 
   return [successful, failed];
 }
 
-async function main() {
+async function main(): Promise<void> {
   const dryRun = process.argv.includes('--dry-run');
   const spinner = ora('Select your CSV file').start();
 
   try {
-    const { default: inquirer } = await import('inquirer') as { default: PromptModule };
     const { filePath } = await inquirer.prompt([
       {
         type: 'input',
