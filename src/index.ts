@@ -1,9 +1,9 @@
 import { config } from 'dotenv';
-import { parse } from 'papaparse';
+import papaparse from 'papaparse';
 import { readFileSync } from 'fs';
 import ora from 'ora';
 import inquirer from 'inquirer';
-import { CsvRow, mapCsvToCoperniq } from './types';
+import { CsvRow, mapCsvToCoperniq } from './types.js';
 
 // Load environment variables
 config();
@@ -34,11 +34,11 @@ async function ingestToCoperniq(data: CsvRow, dryRun: boolean): Promise<boolean>
     // We know COPERNIQ_API_KEY is defined from validation above
     const headers = {
       'Content-Type': 'application/json',
-      'x-api-key': COPERNIQ_API_KEY as string // Type assertion since we validated it above
+      'x-api-key': COPERNIQ_API_KEY as string
     };
 
     const queryParams = new URLSearchParams({
-      match_by: COPERNIQ_MATCH_BY ?? 'primaryEmail', // Fallback if somehow undefined
+      match_by: COPERNIQ_MATCH_BY ?? 'primaryEmail',
       match_found_strategy: COPERNIQ_MATCH_STRATEGY ?? 'skip',
       allow_new_options: COPERNIQ_ALLOW_OPTIONS ?? 'true'
     }).toString();
@@ -94,7 +94,7 @@ async function main(): Promise<void> {
 
     spinner.text = 'Reading CSV file';
     const fileContent = readFileSync(filePath, 'utf-8');
-    const { data, errors } = parse<CsvRow>(fileContent, {
+    const { data, errors } = papaparse.parse<CsvRow>(fileContent, {
       header: true,
       skipEmptyLines: true
     });
